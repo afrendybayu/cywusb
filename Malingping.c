@@ -12,8 +12,10 @@
 //	#include <spi.h>
 
 //#define KIRIM
-#define TERIMA
-//#define KIRIM_TERIMA
+//#define TEST_RELAY
+#define TERIMA			// mode wireless TERIMA [default]
+#define ATAS			// jika dikomen berarti bagian BAWAH
+
 
 unsigned char nilai [2];
 unsigned char x [50];
@@ -30,9 +32,9 @@ int main() {
 	unsigned idle=0;
 	char fT0=0;
 	//unsigned angka;
-	//int keledai = 2;
+
 	
-	initnya();
+	init_nya();
 	lama = 0;	rpmnya=0;
 	itoogle_led=0;
 	f_rpm = 0;
@@ -42,15 +44,12 @@ int main() {
 	int k=0;
 	//int l=0;
 	//angka = 0;
-	
-	//merdeka = 999999;			//4294967295;
-	//sprintf(x, "merdeka: %ld\r\n", merdeka); transmitString(x);
 
 	_delay_ms(100);
 
-	konfig_alat();
-/*
-//	motor_Relay2();
+//*
+#ifdef TEST_RELAY
+	int keledai = 10;
 	while(1) {
 		buang_watchdog();
 		
@@ -67,7 +66,8 @@ int main() {
 		delaylama(keledai);
 	}
 //*/
-
+#else
+	konfig_alat();
 	while(1) {
 		buang_watchdog();
 //		motor_Relay1();
@@ -89,23 +89,12 @@ int main() {
 		#endif
 		
 		if(f_rpm) {				// tiap detik
+		#ifdef ATAS
 			kirim_rpm();
-			toogle_led();
 			f_rpm=0;
+		#endif	
+			toogle_led();		// tiap 1 detik toogle led: tanda wireless masih bekerja
 		}
-		/*
-		#ifdef PAKAI_RPM
-		if (k==100) {
-			rpmnya = hitung_rpm();
-			k=0;
-		} else {
-			k++;
-		}
-		#endif
-		//*/
-		// setiap 2 detik akan toogle led //			penginnya .... pake Timer0 ko ga bisa :(
-		// berguna ketika kincir tidak berputar //
-		// sbg tanda wireless masih bekerja //
 //*
 		//if (l==1) {
 		#ifdef KIRIM
@@ -114,61 +103,29 @@ int main() {
 		#endif	
 			
 		//#ifdef TERIMA
-		#if defined(TERIMA) || defined(KIRIM_TERIMA)
+		#if defined(TERIMA)
 			if (k==1000) 
 		#endif
 			{
-				//toogle_led();
-				/*
-				//#ifdef KIRIM
-				//#if defined(KIRIM) || defined(KIRIM_TERIMA)
-					CYWM_WriteReg( REG_CONTROL, 0x40 );		// mode kirim
-					_delay_ms(10);
-					sprintf(x, "kirim kabar: %d\r\n", ++angka);
-					wireless_puts(x);
-					transmitString("TX: "); transmitString(x);
-					_delay_ms(1);
-					CYWM_WriteReg( REG_CONTROL, 0x80 );		// mode terima
-					_delay_ms(500);
-					buang_watchdog();
-					_delay_ms(500);
-				//#endif
-				//*/
 				#ifdef DEBUG
 					sprintf(x, "__________iT0: %d, iT1: %d, iPU: %d ", iT0, iT1, iPU);   transmitString(x);
 					rpmnya = hitung_rpm();
 					sprintf(x, "^^^^ rpm: %d\r\n", rpmnya);		transmitString(x);
 				#endif
 				k=0;
-				//l=0;
 			} else {
 				k++;
 			}
-		//} else {
-		//	l++;
-		//}
-//*/	
-//		buang_watchdog();	
-/*
-		if(iT0==31) {		// 62 = 2 detik, 31 = 1 detik
-			#ifdef DEBUG
-				sprintf(x, "__________iT0: %d, iT1: %d, iPU: %d ", iT0, iT1, iPU);   transmitString(x);
-				rpmnya = hitung_rpm();
-				sprintf(x, "^^^^ rpm: %d\r\n", rpmnya);		transmitString(x);
-			#endif
-		} else if (iT0==62) {
-			toogle_led();
-		} else {
-			iT0 = 0;
-		}
-//*/
 		idle++;
 //*/
 	}
+#endif
 //*/	
 	return 0;
 }
-/*
+
+#ifdef TEST_RELAY
+//*
 void delaylama(int kali) {
 	int i=0;
 	for (i=0; i<kali; i++) {
@@ -176,6 +133,7 @@ void delaylama(int kali) {
 		_delay_ms(500);
 	}
 }
+#endif
 //*/
 unsigned int hitung_rpm(void) {
 	unsigned long  rpm;
@@ -298,14 +256,9 @@ ISR(TIMER1_OVF_vect) {
 ISR(TIMER0_OVF_vect) {
 	unsigned char sreg;
 	sreg = SREG;			// simpan global interrupt flag
-	cli();
-	//__asm__ __volatile__ ("cli" ::);
+	__asm__ __volatile__ ("cli" ::);
 	//TCNT0=2;
 	
-    //__asm__ __volatile__ ("sei" ::);
-    //kirim_rpm();
-    sei();
-
 	if(iT0==31) {		// nambah setiap detik
 		iT0=0;
 		HIDUP=HIDUP+1;
@@ -313,6 +266,11 @@ ISR(TIMER0_OVF_vect) {
 	} else {
 		iT0++;
 	}
+    __asm__ __volatile__ ("sei" ::);
+    
+    //sei();
+
+	
 } 
 
 /*
@@ -392,22 +350,18 @@ ISR(INT0_vect) {
 void konfig_alat() {
 	buang_watchdog();
 	#ifdef WUSB_CYPRESS
-	#ifdef TERIMA
-		konfig_WUSB('b');		// 'b'	
-	#endif
-	
-	#ifdef KIRIM
-		konfig_WUSB('s');
-	#endif
-	
-	#ifdef KIRIM_TERIMA
-		konfig_WUSB('s');
-	#endif
+		#ifdef TERIMA
+			konfig_WUSB('b');		// 'b'	
+		#endif
+		
+		#ifdef KIRIM
+			konfig_WUSB('s');
+		#endif
 	#endif
 	//config_WUSB();
 }
 
-void initnya(void) {
+void init_nya(void) {
 	init_io();
 	init_SPI_Master();
 	usart_init();
@@ -419,10 +373,11 @@ void initnya(void) {
 	#endif
 	
 	init_watchdog();
+	
 	#ifdef WUSB_CYPRESS
-	init_WUSB();
+		init_WUSB();
 	#endif
-	PORTC |= (_BV(LED));		// hidup
+	PORTC |= (_BV(LED));		// LED hidup
 	
 	#ifdef DEBUG
 		tes_max();
@@ -431,7 +386,7 @@ void initnya(void) {
 	
 	#ifdef PAKAI_BLINK
 	int dowo;
-	for (dowo=0; dowo<5; dowo++) {
+	for (dowo=0; dowo<3; dowo++) {
 		blink();
 		_delay_ms(100);	
 	}
@@ -537,8 +492,15 @@ void wusb_in(unsigned char c) {
 		transmit('\n');
 		
 		if (wusbc>0) {
-			passin[passc] = '\0';
-			aksinya(wusbin);
+			wusbin[wusbc] = '\0';
+			#ifndef ATAS
+				if (strncmp(wusbin, "w_rpm", 5)==0) {
+					paket_rpm(wusbin);
+				} else
+			#endif
+				{
+					aksinya(wusbin);
+				}
 		}
 		wusbc = 0;
 		wusbin[0] = '\0';
@@ -563,48 +525,61 @@ void wusb_in(unsigned char c) {
 
 int aksinya(char * perintah) {
 	buang_watchdog();
-	if (strncmp(perintah, "rpm", 3)==0) {
+	//sprintf(x, "Perintahnya: %s, p: %d\r\n", perintah, strlen(perintah)); 	transmitString(x);
+	if (strcmp(perintah, "rpm")==0) {
 		sprintf(x, "CMD rpm: %d", hitung_rpm()); 	transmitString(x);
-	} else if (strncmp(perintah, "mtrA", 4)==0) {
+	} else if (strcmp(perintah, "mtrA")==0) {
 		sprintf(x, "CMD: mtrA"); 	transmitString(x);
 		#ifdef PAKAI_RELAY
 			motor_Relay1();
 		#endif
-	} else if (strncmp(perintah, "mtrB", 4)==0) {
+	} else if (strcmp(perintah, "mtrB")==0) {
 		sprintf(x, "CMD: mtrB"); 	transmitString(x);
 		#ifdef PAKAI_RELAY
 			motor_Relay2();
 		#endif
-	} else if (strncmp(perintah, "reset", 5)==0) {
+	} else if (strcmp(perintah, "reset")==0) {
 		sprintf(x, "_____Reset_____"); 	transmitString(x);
 		reset();
-	} else if (strncmp(perintah, "uptime", 6)==0) {
+	} else if (strcmp(perintah, "uptime")==0) {
 		sprintf(x, "uptime : "); 	transmitString(x);
 		uptime();
-	} else if (strncmp(perintah, "wusb", 4)==0) {
-		//sprintf(x, "Kirim ke wusb"); 	transmitString(x);
+	} else if (strncmp(perintah, "wusb",4)==0) {
+		sprintf(x, "Kirim ke wusb"); 	transmitString(x);
 		#ifdef WUSB_CYPRESS
-		kirim_wusb(perintah);
+			kirim_wusb(perintah);
 		#endif
 		//reset();
-	} else if (strncmp(perintah, "konfig", 6)==0) {
+	} else if (strcmp(perintah, "konfig")==0) {
 		//liatConfigWUSB();
 		#ifdef WUSB_CYPRESS
-		lihatKonfig();
+			lihatKonfig();
 		#endif
-	} else if (strncmp(perintah, "mtrmati", 7)==0) {
+	} else if (strcmp(perintah, "mtrmati")==0) {
 		sprintf(x, "CMD: matikan motor"); 	transmitString(x);
 		#ifdef PAKAI_RELAY
 			motor_mati();
 		#endif
+	#ifndef ATAS
 	} else {
 		sprintf(x, "CMD salah!! : %s\r\n", perintah); 	transmitString(x);
 		sprintf(x, "CMD: rpm, mtrmati, mtrA, mtrB, reset, konfig, wusb"); 	transmitString(x);
+	#endif
 	}
 	transmit('\n');
 	//strcpy(passin,"");
 	return 0;
 }
+
+#ifndef ATAS			// BAWAH
+void paket_rpm(char * data) {
+	char *pch;
+	pch=strstr(data," ");
+	if (pch!=NULL) {
+		sprintf(x, "RPM kincir: %d\r\n", atoi(pch+1)); 	transmitString(x);
+	}
+}
+#endif
 
 void uptime() {
 	int tmp=0;
@@ -623,34 +598,37 @@ void uptime() {
 	if (hari>0)		{	sprintf(x,"%d hari ",hari);transmitString(x);		}
 	if (jam>0)		{	sprintf(x,"%d jam ",jam);transmitString(x);			}
 	if (menit>0)	{	sprintf(x,"%d menit ",menit);transmitString(x);		}
-	if (detik>0)	{	sprintf(x,"%d detik\r\n",detik);transmitString(x);	}
+	if (detik>0)	{	sprintf(x,"%d detik",detik);transmitString(x);	}
+	
 	#ifdef WUSB_CYPRESS
 		tmp = CYWM_ReadReg(REG_RSSI);
-		sprintf(x, "[%sValid] RSSI: %d", (tmp&0x20)?"":"Tak ",tmp&0x1F);  transmitString(x);
+		sprintf(x, "\r\n[%sValid] RSSI: %d", (tmp&0x20)?"":"Tak ",tmp&0x1F);  transmitString(x);
 	#endif
+	
 }
 #ifdef WUSB_CYPRESS
 void kirim_wusb(char *cmd) {
-	CYWM_WriteReg( REG_CONTROL, 0x40 );		// mode kirim
-	char *pch;
-	pch=strstr(cmd," ");
-	if (pch!=NULL) {
-		sprintf(x, "%s", pch+1); 	transmitString(x);
-		wireless_puts(x); wireless_putc('\n');
+	unsigned char rssi = CYWM_ReadReg(REG_RSSI);
+	if ( (rssi&0x20)  ) {		// && (rssi&0x1F)>10
+		CYWM_WriteReg( REG_CONTROL, 0x40 );		// mode kirim
+		char *pch;
+		pch=strstr(cmd," ");
+		if (pch!=NULL) {
+			sprintf(x, "%s", pch+1); 	
+			
+			#ifndef ATAS
+				transmitString(x);
+			#endif
+			
+			wireless_puts(x); wireless_putc('\n');
+		}
+		CYWM_WriteReg( REG_CONTROL, 0x80 );		// mode terima
 	}
-	CYWM_WriteReg( REG_CONTROL, 0x80 );		// mode terima
 }
 //*
 void kirim_rpm() {
-	unsigned char rssi = CYWM_ReadReg(REG_RSSI);
-	if ( (rssi&0x20) && (rssi&0x1F)>10 ) 
-	{
-		CYWM_WriteReg( REG_CONTROL, 0x40 );		// mode kirim
-		sprintf(x, "kirim rpm\r\n"); 	
-		transmitString(x);
-		//wireless_puts(x);
-		CYWM_WriteReg( REG_CONTROL, 0x80 );		// mode terima
-	}
+	sprintf(x, "n w_rpm %d", hitung_rpm()); 	//transmitString(x);
+	kirim_wusb(x);
 }
 //*/
 #endif
@@ -912,10 +890,15 @@ void konfig_WUSB(char tipe) {
 
 void lihatKonfig() {
 	buang_watchdog();
-	sprintf(x, "Konfig Wireless\r\n"); 	transmitString(x);
+	sprintf(x, "Konfig Wireless "); 	transmitString(x);
+	#ifdef ATAS
+		transmitString("KINCIR ATAS");
+	#else
+		transmitString("BUNKER BAWAH");
+	#endif
 //	sprintf(x, "----------------\r\n"); 	transmitString(x);
 
-	sprintf(x, "Reg ID         : 0x%x\r\n", CYWM_ReadReg(REG_ID)); transmitString(x);
+	sprintf(x, "\r\nReg ID         : 0x%x\r\n", CYWM_ReadReg(REG_ID)); transmitString(x);
     sprintf(x, "Clock Manual   : 0x%x\r\n", CYWM_ReadReg(REG_CLOCK_MANUAL)); transmitString(x);
     sprintf(x, "Clock Enable   : 0x%x\r\n", CYWM_ReadReg(REG_CLOCK_ENABLE)); transmitString(x);
 //    sprintf(x, "Enable SerDes  : %x\r\n", CYWM_ReadReg()); transmitString(x);

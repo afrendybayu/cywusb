@@ -30,7 +30,7 @@
 
 #define hidup 1
 #define mati  0
-#define P_HIDUP "MLP"
+
 
 unsigned char perintah [panjang];
 unsigned char nilai [2];

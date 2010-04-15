@@ -54,7 +54,7 @@ void transmit(unsigned char);
 void transmitString(unsigned char *);
 unsigned char receive(void);
 
-void initnya(void);
+void init_nya(void);
 void toogle_led(void);
 void blink(void);
 unsigned int hitung_rpm(void);
