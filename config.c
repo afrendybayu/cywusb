@@ -7,21 +7,20 @@
 #include <avr/interrupt.h>
 
 
-
 //#define DEBUG
 #define PAKAI_BLINK
 #define PAKAI_RELAY
 #define	PAKAI_RPM
-//#define PAKAI_WUSB
-//#define WUSB_CYPRESS
+				//#define PAKAI_WUSB
+#define WUSB_CYPRESS
 
 
 #define baud 38400		// coba  9600
 #define ubrr ((F_CPU/(baud*16UL))-1)
 #define bingung UCSRA
 
-#define NL		10
-#define CR		13
+//#define NL		10
+//#define CR		13
 
 #define DD_MOSI    3
 #define DD_SCK     5
@@ -47,13 +46,8 @@
 //#define SINYAL	PD2			// pin no 5, di hanya ada di RX
 #define LED		PC0			// pin no 23, aktif high
 
-#define hidup 1
-#define mati  0
-
 #define low(port, pin) (port &= ~_BV(pin))
 #define high(port, pin) (port |= _BV(pin))
-
-//#define P_HIDUP "MLP"
 
 void usart_init(void);
 void transmit(unsigned char);
@@ -64,6 +58,7 @@ void initnya(void);
 void toogle_led(void);
 void blink(void);
 unsigned int hitung_rpm(void);
+void iklan(void);
 
 #ifdef PAKAI_TES_MAX
 	void tes_max(void);
@@ -87,6 +82,10 @@ void liatConfigWUSB(void);
 void config_WUSB(void);
 void shutdown_WUSB(void);
 void reset_wusb(void);
+
+void wireless_putc(char);
+void wireless_puts(char *);
+void wireless_puti(const int);
 
 uint8_t CYWM_ReadReg(uint8_t);
 void CYWM_WriteReg(uint8_t, uint8_t);
