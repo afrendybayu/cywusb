@@ -1,0 +1,32 @@
+
+Afrendy Bayu
+15 April 2010
+
+Malingping.c
+-------------
+
+Setting Modul Wireless untuk Kincir dan Rumah ada di #define ATAS.
+Jika diaktifkan, maka dipasang di Kincir.
+Jika dinonaktifkan, dipakai di Ruang kontrol.
+
+Fitur:
+- Mengukur RPM putaran kincir
+- Tiap 1 detik mengirim data RPM kincir ke ruang kontrol [Modul wireless bawah]
+- Toogle Led untuk kincir running dan standby 
+- 
+
+Perintah:
+- rpm
+- uptime
+- mtrA
+- mtrB
+- reset
+- konfig
+- mtrmati
+- wusb
+	> wusb [perintah]
+
+
+kosongan.c
+-------------
+Kode untuk mengecek blink dan komunikasi serial port.
