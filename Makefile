@@ -1,6 +1,8 @@
 MCU=atmega8
 CC=avr-gcc
-file=Malingping
+#file=Malingping
+file=optimalkan
+#file=spektrum
 #file=kosongan
 #file=utama-24juni2009
 # main

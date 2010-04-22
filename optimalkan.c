@@ -14,7 +14,7 @@
 //#define KIRIM
 //#define TEST_RELAY
 #define TERIMA			// mode wireless TERIMA [default]
-//#define ATAS			// jika dikomen berarti bagian BAWAH
+#define ATAS			// jika dikomen berarti bagian BAWAH
 
 
 unsigned char nilai [2];
@@ -33,14 +33,14 @@ int main() {
 	char fT0=0;
 	//unsigned angka;
 
-	
+
 	init_nya();
 	lama = 0;	rpmnya=0;
 	itoogle_led=0;
 	f_rpm = 0;
 	iT0 = 0; 	iPU = 0;
 	iT2 = 0;	HIDUP = 0;
-	
+
 	int k=0;
 	//int l=0;
 	//angka = 0;
@@ -52,16 +52,16 @@ int main() {
 	int keledai = 10;
 	while(1) {
 		buang_watchdog();
-		
+
 		motor_Relay1();
 		delaylama(keledai);
-		
+
 		motor_mati();
 		delaylama(keledai);
-		
+
 		motor_Relay2();
 		delaylama(keledai);
-		
+
 		motor_mati();
 		delaylama(keledai);
 	}
@@ -71,7 +71,7 @@ int main() {
 	while(1) {
 		buang_watchdog();
 //		motor_Relay1();
-		/*
+		//*
 		//#ifdef TERIMA
 		#ifdef WUSB_CYPRESS
 		#if defined(TERIMA) || defined(KIRIM_TERIMA)
@@ -87,12 +87,13 @@ int main() {
 		}
 		#endif
 		#endif
-		
+
 		if(f_rpm) {				// tiap detik
 		#ifdef ATAS
 			kirim_rpm();
+			
+		#endif
 			f_rpm=0;
-		#endif	
 			toogle_led();		// tiap 1 detik toogle led: tanda wireless masih bekerja
 		}
 //*
@@ -101,7 +102,7 @@ int main() {
 		//	if (k==32000) 
 			if (k==1000) 
 		#endif	
-			
+
 		//#ifdef TERIMA
 		#if defined(TERIMA)
 			if (k==1000) 
@@ -109,9 +110,7 @@ int main() {
 			{
 				#ifdef DEBUG
 					sprintf(x, "__________iT0: %d, iT1: %d, iPU: %d ", iT0, iT1, iPU);   transmitString(x);
-					#ifdef ATAS
 					rpmnya = hitung_rpm();
-					#endif
 					sprintf(x, "^^^^ rpm: %d\r\n", rpmnya);		transmitString(x);
 				#endif
 				k=0;
@@ -137,7 +136,6 @@ void delaylama(int kali) {
 }
 #endif
 //*/
-#ifdef ATAS
 unsigned int hitung_rpm(void) {
 	unsigned long  rpm;
 	unsigned int putaran=0;
@@ -148,10 +146,10 @@ unsigned int hitung_rpm(void) {
 	#ifdef DEBUG
 		sprintf(x, "konter: %ld, lama: %ld, rpm: %ld, putaran: %d  ", konter, lama, rpm, putaran);		transmitString(x);
 	#endif
-	
+
 	return putaran;
 } 
-#endif
+
 
 
 #ifdef DEBUG
@@ -200,7 +198,7 @@ void usart_init(void) {
 	//set baud rate
 	UBRRH= (unsigned char) (ubrr>>8);
 	UBRRL= (unsigned char) ubrr;
-	
+
 	//interupt receiver, enable receiver dan transmeiter
 	UCSRB = (1<<RXCIE)|(1<<RXEN)|(1<<TXEN);
 	//UCSRB=0x98;
@@ -214,7 +212,7 @@ void usart_init(void) {
 void transmit(unsigned char data) { 	// kirim data 1 chr
 	//menunggu buffer transmit kosong
 	while(!(bingung&(1<<UDRE))){}; //letakkan data di buffer, lalu kirim
-	
+
 	//while ( !( UCSRA & (1<<UDRE)) );
      UDR=data;
 	//return UDR;
@@ -261,7 +259,7 @@ ISR(TIMER0_OVF_vect) {
 	sreg = SREG;			// simpan global interrupt flag
 	__asm__ __volatile__ ("cli" ::);
 	//TCNT0=2;
-	
+
 	if(iT0==31) {		// nambah setiap detik
 		iT0=0;
 		HIDUP=HIDUP+1;
@@ -270,6 +268,9 @@ ISR(TIMER0_OVF_vect) {
 		iT0++;
 	}
     __asm__ __volatile__ ("sei" ::);
+    
+    //sei();
+
 
 } 
 
@@ -339,7 +340,7 @@ ISR(INT0_vect) {
 		nyala = 1;
 	}	
 //*/	
-	
+
 //	GIFR |= 0x80;
 	//GICR |= 0x80;
 
@@ -355,7 +356,7 @@ void konfig_alat() {
 		#endif
 		
 		#ifdef KIRIM
-			konfig_WUSB('s');
+			konfig_WUSB('k');
 		#endif
 	#endif
 	//config_WUSB();
@@ -371,7 +372,7 @@ void init_nya(void) {
 	#ifdef PAKAI_RELAY
 		motor_mati();
 	#endif
-	
+
 	init_watchdog();
 	
 	#ifdef WUSB_CYPRESS
@@ -413,9 +414,8 @@ void init_SPI_Master() {
 //    /* Set MOSI and SCK output, all others input */
     DDR_SPI = (1<<DD_MOSI)|(1<<DD_SCK);
     /* Enable SPI, Master, set clock rate fck/16 */
-    SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);	
+    SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
 //    SPCR = 0x50;     // SPE = SPCR.6 = 1, MSTR = SPCR.4 = 1, SPR.0 = 1 (Fsoc/4)   0101 0001
-	_delay_ms(1);
 }
 
 void init_timer() {
@@ -444,10 +444,10 @@ void init_io() {
 	DDRD = 0x00;			//  SINYAL	PD2		0000 0000
 	DDRC = 0x1D;			//	LED		PC0		0001 1101
 	DDRB = 0x2F;			//  0010 1111, PB2, PB1 output relay (1)
-	
+
 	//DDRB = _BV(CYWM_SCK) | _BV(CYWM_MOSI) | _BV(RELAY1) | _BV(RELAY2);
 	//DDRC = _BV(CYWM_nPD) | _BV(CYWM_nRESET) | _BV(CYWM_nSS) | _BV(wCS) | _BV(LED);
-	
+
 	__asm__ __volatile__ ("nop");		// untuk sinkronisasi
 }
 
@@ -458,7 +458,7 @@ void karakter_in(unsigned char c) {
 	if(c=='\n' || c=='\r' || c=='!') {
 		// eksekusi !!
 		transmit('\n');
-		
+
 		if (passc>0) {
 			passin[passc] = '\0';
 			aksinya(passin);
@@ -491,7 +491,7 @@ void wusb_in(unsigned char c) {
 	if(c=='\n' || c=='\r') {
 		// eksekusi !!
 		transmit('\n');
-		
+
 		if (wusbc>0) {
 			wusbin[wusbc] = '\0';
 			#ifndef ATAS
@@ -527,12 +527,9 @@ void wusb_in(unsigned char c) {
 int aksinya(char * perintah) {
 	buang_watchdog();
 	//sprintf(x, "Perintahnya: %s, p: %d\r\n", perintah, strlen(perintah)); 	transmitString(x);
-	#ifdef ATAS
 	if (strcmp(perintah, "rpm")==0) {
 		sprintf(x, "CMD rpm: %d", hitung_rpm()); 	transmitString(x);
-	} else 
-	#endif
-	if (strcmp(perintah, "mtrA")==0) {
+	} else if (strcmp(perintah, "mtrA")==0) {
 		sprintf(x, "CMD: mtrA"); 	transmitString(x);
 		#ifdef PAKAI_RELAY
 			motor_Relay1();
@@ -549,7 +546,7 @@ int aksinya(char * perintah) {
 		sprintf(x, "uptime : "); 	transmitString(x);
 		uptime();
 	} else if (strncmp(perintah, "wusb",4)==0) {
-		sprintf(x, "Kirim wusb\r\n"); 	transmitString(x);
+		sprintf(x, "Kirim ke wusb"); 	transmitString(x);
 		#ifdef WUSB_CYPRESS
 			kirim_wusb(perintah);
 		#endif
@@ -591,7 +588,7 @@ void uptime() {
 	int jam=0;
 	int menit=0;
 	int detik=0;
-	
+
 	hari  = HIDUP/86400;		// (24*60*60) 
 	tmp   = HIDUP%86400;
 	jam   = tmp/3600;
@@ -605,44 +602,45 @@ void uptime() {
 	if (detik>0)	{	sprintf(x,"%d detik",detik);transmitString(x);	}
 	
 	#ifdef WUSB_CYPRESS
-		CYWM_WriteReg( REG_CONTROL, 0x80 | 0x10);
-		CYWM_WriteReg( REG_CARRIER_DETECT, 0x00 );	    
-		CYWM_WriteReg( REG_CARRIER_DETECT, 0x80 );	   
-		_delay_us(100); 
-      
-		tmp = CYWM_ReadReg( REG_RSSI );
-
+		tmp = CYWM_ReadReg(REG_RSSI);
 		sprintf(x, "\r\n[%sValid] RSSI: %d", (tmp&0x20)?"":"Tak ",tmp&0x1F);  transmitString(x);
 	#endif
-	
+
 }
 #ifdef WUSB_CYPRESS
 void kirim_wusb(char *cmd) {
 	unsigned char rssi = CYWM_ReadReg(REG_RSSI);
 	if ( (rssi&0x20)  ) {		// && (rssi&0x1F)>10
-		CYWM_WriteReg( REG_CONTROL, 0x40 | 0x10);		// mode kirim
+		CYWM_WriteReg( REG_CONTROL, 0x40 );		// mode kirim
 		char *pch;
 		pch=strstr(cmd," ");
 		if (pch!=NULL) {
 			sprintf(x, "%s", pch+1); 	
-			
+
 			#ifndef ATAS
-				transmitString(x);
+				//transmitString(x);
 			#endif
-			
+
 			wireless_puts(x); wireless_putc('\n');
 		}
-		CYWM_WriteReg( REG_CONTROL, 0x80 | 0x10);		// mode terima
+		CYWM_WriteReg( REG_CONTROL, 0x80 );		// mode terima
 	}
 }
 //*
+#define TES
+#ifdef TES
+	int angka=0;
+#endif
 
-#ifdef ATAS
 void kirim_rpm() {
-	sprintf(x, "n w_rpm %d", hitung_rpm()); 	//transmitString(x);
+	#ifdef TES
+		sprintf(x, "n w_rpm %d", angka++); 	//transmitString(x);
+		transmitString(x);	transmit('\n');
+	#elif
+		sprintf(x, "n w_rpm %d", hitung_rpm()); 	//transmitString(x);
+	#endif
 	kirim_wusb(x);
 }
-#endif
 //*/
 #endif
 
@@ -697,8 +695,8 @@ void init_watchdog() { 		// enable WDT
 	//MCUCSR |= (0<<WDRF);
 	//WDTCR  |= (1<<WDP2) | (1<<WDP1) | (1<<WDP0);		// 111: 2detik, 110: 1detik
 	//WDTCR  |= (1<<WDE);
-	
-	
+
+
 	WDTCR  |= (1<<WDCE) | (1<<WDE);
 	WDTCR  |= (1<<WDP2) | (1<<WDP1) | (1<<WDP0);		// 111: 2detik, 110: 1detik
     //WDTCR = 0x18;
@@ -714,7 +712,7 @@ void buang_watchdog() {		// reset WDT
 void init_WUSB(void) {
 	// wPD   	PC3       // pin 26
 	// wRST  	PC4
-	
+
     //wRST = 1;
 //    PORTC |= (_BV(wPD));
     //wPD  = 1;
@@ -734,7 +732,7 @@ void shutdown_WUSB(void) {
 
 #ifdef WUSB_ASLI
 void config_WUSB(void) {
-	
+
 //	unsigned char wawa;
 //	sprintf(x, "%cWireless ON ...%c", CR, CR); transmitString(x);
 //    _delay_ms(500);
@@ -745,7 +743,7 @@ void config_WUSB(void) {
 
 	tlsSingleClockManual(0x41);
 	_delay_ms(1);
-	
+
     tlsSingleClockEna(0x41);
     _delay_ms(1);
     
@@ -778,7 +776,7 @@ void config_WUSB(void) {
 	PORTD &= ~(_BV(SINYAL));
 	_delay_ms(100);
 //*/
-	
+
 /*	
     sprintf(x, "Reg ID         : %x%c", bacaRegID(), CR); transmitString(x);
     EEPROM_tulis(3, bacaRegID());                                        
@@ -861,7 +859,7 @@ uint8_t CYWM_ReadReg(uint8_t which) {
 void konfig_WUSB(char tipe) {
 	uint8_t data;
 	int flag, oz;
-	
+
 	buang_watchdog();
 	flag=0;
 	for (oz=0; oz<25; oz++) {
@@ -887,19 +885,17 @@ void konfig_WUSB(char tipe) {
 	CYWM_WriteReg( REG_SERDES_CTL, 0x03 | 0x08 );	// Enable SERDES
 	CYWM_WriteReg( REG_TX_VALID, 0xFF );			// Set all SERDES bits valid for TX
 	CYWM_WriteReg( REG_VCO_CAL, 0xC0 );				// Set VCO adjust to -5/+5
-	//CYWM_WriteReg( REG_ANALOG_CTL, 0x04 );			// Enable PA Control Output
-	CYWM_WriteReg( REG_ANALOG_CTL, 0x44 );			// Enable PA Control Output		// 7654 3210
-	CYWM_WriteReg( REG_PWR_CTL, 0x80 );				// Conserve power (must set REG_ANALOG_CTL, bit 6=1 to enable writes)
+	CYWM_WriteReg( REG_ANALOG_CTL, 0x04 );			// Enable PA Control Output
 	//CYWM_WriteReg( REG_PWR_CTL, 0x80 );				// Conserve power (must set REG_ANALOG_CTL, bit 6=1 to enable writes)
-	//CYWM_WriteReg( REG_CHANNEL, 42 );				// Use channel 42
-	CYWM_WriteReg( REG_CHANNEL, 58 );				// Use channel 42
-	//CYWM_WriteReg( REG_PA, 0x00 );					// Set maximum transmit power
+	CYWM_WriteReg( REG_CHANNEL, 42 );				// Use channel 42
 	CYWM_WriteReg( REG_PA, 0x07 );					// Set maximum transmit power
 	CYWM_WriteReg( REG_RX_INT_EN, 0x03 );			// Enable EOF and FULL interrupts for channel A
 	if (tipe=='b')		// b = baca
-		CYWM_WriteReg( REG_CONTROL, 0x80 | 0x10);				// Enable RX saja
+		CYWM_WriteReg( REG_CONTROL, 0x80 );				// Enable RX saja
+	else if (tipe=='s')	// s = semua
+		CYWM_WriteReg( REG_CONTROL, 0x80 | 0x40 );				// Enable TX RX
 	else {				// t = tulis		k = kirim
-		CYWM_WriteReg( REG_CONTROL, 0x40 | 0x10 );				// Enable TX saja
+		CYWM_WriteReg( REG_CONTROL, 0x40 );				// Enable TX saja
 	}
 }
 
@@ -928,7 +924,7 @@ void lihatKonfig() {
 //    sprintf(x, "Ena RX Int     : %x\r\n", CYWM_ReadReg());  transmitString(x);         // baca data A dan B
     sprintf(x, "Kontrol RX TX  : 0x%x   mode ", CYWM_ReadReg(REG_CONTROL));  transmitString(x);
     
-    if (CYWM_ReadReg(REG_CONTROL)==(0x80 | 0x10) ) {
+    if (CYWM_ReadReg(REG_CONTROL)==0x80) {
 		sprintf(x, "terima [Receiver]");  transmitString(x);
 	} else {
 		sprintf(x, "kirim [Transmitter]");  transmitString(x);

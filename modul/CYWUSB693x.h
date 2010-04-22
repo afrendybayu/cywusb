@@ -76,3 +76,5 @@ From CYWM693x datasheet:
 #define REG_CARRIER_DETECT	0x2F
 #define REG_CLOCK_MANUAL	0x32
 #define REG_CLOCK_ENABLE	0x33
+
+#define REG_CRYSTAL_ADJ         0x24
